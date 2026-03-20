@@ -1,5 +1,3 @@
-# TREM2_GFP_analysis
-R scripts for automated quantification of spatial proximity between TREM2⁺ myeloid and GFP⁺ tumor cells in immunofluorescence images. Includes DAPI segmentation, intensity profiling, nearest-neighbour analysis, Ripley’s K/L statistics, and publication-ready outputs.
 # TREM2–GFP Spatial Proximity Analysis
 
 R scripts for quantifying spatial proximity between **TREM2⁺** and **GFP⁺** cells in immunofluorescence (IHF) images.
@@ -40,14 +38,23 @@ source("scripts/IHF_analysis_proximity_TREM2_GFP.R")
 5. Results appear in /outputs/.
 
 Output files
+For each processed field <id> (format: <base_root>__series<XX>):
 
-Results appear in /outputs/.
 File	Description
-MAP_seriesXX.png	Spatial map (DAPI, GFP⁺, TREM2⁺)
-nearest_TREM2_to_GFP_ALL.xlsx	TREM2⁺→GFP⁺ distances (µm)
-ripley_TREM2vGFP_ALL.csv	Ripley’s K/L spatial stats
-recap_TREM2_vs_DAPI.xlsx	DAPI and TREM2⁺ counts per field
-Citation
+inventaire_champs.csv	List of all detected fields with per-channel file paths
+MAP_<id>.png	Spatial map of cells colour-coded by status: grey = DAPI, green = GFP+, pink = TREM2+
+cells_<id>.csv	Per-cell measurements for one field: coordinates, mean intensities, GFP/TREM2 status
+nearest_TREM2_to_GFP_<id>.xlsx	TREM2+ → nearest GFP+ distances (double-positive self-pairing excluded) — per field
+nearest_TREM2_to_GFP_<id>.csv	Same as above in CSV format
+hist_TREM2_to_GFP_<id>.png	Histogram of TREM2+ → GFP+ distance distribution — per field
+ripley_TREM2vGFP_<id>.csv	Ripley K/L cross-function values (TREM2 vs GFP) — per field
+ripley_LminusR_<id>.png	Plot of L(r) − r from the cross Ripley function — per field
+cells_ALL_bases_ALL_series.csv	Consolidated per-cell measurements across all fields
+nearest_TREM2_to_GFP_ALL.xlsx	Consolidated TREM2→GFP distances across all fields
+nearest_TREM2_to_GFP_ALL.csv	Same as above in CSV format
+ripley_TREM2vGFP_ALL.csv	Consolidated Ripley K/L values across all fields
+recap_TREM2_vs_DAPI.xlsx	Summary per field: n DAPI cells, n TREM2+, % TREM2+
+recap_TREM2_vs_DAPI.csv	Same as above in CSV format
 
 Author: Martin Pedard, University of Geneva
 Contact: martin.pedard@unige.ch
