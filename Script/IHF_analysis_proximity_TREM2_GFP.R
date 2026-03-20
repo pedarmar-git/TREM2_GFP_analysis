@@ -14,7 +14,8 @@ library(spatstat.geom); library(spatstat.explore)
 options(stringsAsFactors = FALSE)
 
 # -------- PARAMÈTRES --------
-img_dir <- "C:\Users\pedard\Desktop\Github deposit"
+# FIX 1: chemin relatif vers le dossier "Example data/" fourni avec le dépôt
+img_dir <- "Example data"
 out_dir <- file.path(img_dir, "outputs"); if (!dir.exists(out_dir)) dir.create(out_dir, TRUE)
 
 # Vitesse & segmentation
@@ -214,20 +215,40 @@ ripley_cross <- function(dt, px_um = 0.5, r_max_um = 100, r_step_um = 2, corr = 
 # -------- PARSING FICHIERS --------
 stopifnot(dir.exists(img_dir))
 cat("\n=== Vérification du dossier ===\n")
-files_test <- list.files(img_dir, pattern="\\.(jpg|jpeg)$", full.names=TRUE, recursive=TRUE, ignore.case=TRUE)
-if (!length(files_test)) stop("Aucun .jpg/.jpeg trouvé — corrigez 'img_dir' ou placez vos images.")
+
+# FIX 2: extensions élargies aux TIFF (fréquents en microscopie)
+files_test <- list.files(img_dir, pattern="\\.(jpg|jpeg|tif|tiff)$",
+                         full.names=TRUE, recursive=TRUE, ignore.case=TRUE)
+if (!length(files_test)) stop("Aucun fichier image trouvé — corrigez 'img_dir' ou placez vos images.")
 cat(sprintf("✅ %d fichiers image trouvés (aperçu):\n", length(files_test)))
 print(utils::head(basename(files_test), 5))
 cat("===============================\n\n"); flush.console()
 
-files <- list.files(img_dir, pattern="\\.(jpg|jpeg)$", full.names=TRUE, ignore.case=TRUE, recursive=TRUE)
+# FIX 2: lecture des fichiers avec extensions élargies
+files <- list.files(img_dir, pattern="\\.(jpg|jpeg|tif|tiff)$",
+                    full.names=TRUE, ignore.case=TRUE, recursive=TRUE)
 dtf <- data.table(path=files, file=basename(files))
-m <- stringr::str_match(dtf$file, "^(.*)\\s\\(\\s*series\\s*(\\d+)\\s*\\)\\s-\\sC\\s*=\\s*(\\d+)\\.(?:jpg|jpeg)$")
+
+# FIX 2: regex robuste — insensible à la casse, espaces flexibles,
+#         "=" optionnel, tiret demi-cadratin toléré, nom non-vide garanti
+m <- stringr::str_match(dtf$file,
+  "(?i)^(.+?)\\s*\\(\\s*series\\s*(\\d+)\\s*\\)\\s*[-\u2013]\\s*C\\s*=?\\s*(\\d+)\\.(?:jpg|jpeg|tif|tiff)$")
+
 dtf[, base_root := tolower(trimws(m[,2]))]
 dtf[, series_id := suppressWarnings(as.integer(m[,3]))]
 dtf[, chan      := m[,4]]
 dtf <- dtf[!is.na(base_root) & !is.na(series_id) & !is.na(chan)]
-if (!nrow(dtf)) stop("Parsing impossible : attendu '... (series XX) - C=Y.jpg'")
+
+if (!nrow(dtf)) {
+  cat("\n⚠️  Exemples de noms de fichiers trouvés:\n")
+  print(utils::head(basename(files), 10))
+  stop(paste0(
+    "Parsing impossible : les noms de fichiers ne correspondent pas au format attendu.\n",
+    "Format attendu : '<nom> (series XX) - C=Y.jpg' (ou .tif / .tiff)\n",
+    "Exemple        : 'Brain01 (series 03) - C=0.jpg'\n",
+    "Vérifiez les noms affichés ci-dessus."
+  ))
+}
 
 grp <- dtf[, .(
   pC0 = path[chan=="0"][1],
